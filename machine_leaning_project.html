@@ -107,6 +107,7 @@ hist(pmltrain$accel_forearm_z, main=&quot;forearm_z&quot;)</code></pre>
 <h1>Machine Learning step - Training</h1>
 <p>I did not divide up the training set into a training and testing set, similar to what we saw in class in example after example. I decided that we were already being handed a dataset divided into training and testing.</p>
 <p>I decided to attempt a random forest with and without crossvalidation. I tried without crossvalidation to see what the runtime would be, and then I tried with crossvalidation because I know with Random Forests I needed that technique to lower the odds of overfitting the training data.</p>
+<p>When I ran this first random forest, it took 18 hours, so I decided to NOT re-run it inside the RStudio R shell. As a result, I have just copied and pasted my results.</p>
 <p>Without cross-validation:</p>
 <pre class="r"><code>accel_data &lt;- grep(&quot;^accel_&quot;,colnames(t), value=TRUE)
 new_t &lt;- data.frame(t[,accel_data],t$classe)
@@ -150,6 +151,7 @@ B  122 3542   90   24   19  0.06715828
 C   45   73 3275   28    1  0.04295733
 D   56    9  114 3026   11  0.05907960
 E    7   37   24   24 3515  0.02550596</code></pre>
+<p>Same note as previous: this ran in a different R shell, but only took an hour or two on a faster computer with allowParallel turned on. Again, I chose to just copy/paste in my results from the other R Shell.</p>
 <p>With cross-validation:</p>
 <pre class="r"><code>library(caret)
 Loading required package: lattice

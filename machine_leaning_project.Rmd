@@ -50,6 +50,8 @@ I did not divide up the training set into a training and testing set, similar to
 
 I decided to attempt a random forest with and without crossvalidation.  I tried without crossvalidation to see what the runtime would be, and then I tried with crossvalidation because I know with Random Forests I needed that technique to lower the odds of overfitting the training data.
 
+When I ran this first random forest, it took 18 hours, so I decided to NOT re-run it inside the RStudio R shell.  As a result, I have just copied and pasted my results.
+
 Without cross-validation:
 ```{r eval=FALSE}
 accel_data <- grep("^accel_",colnames(t), value=TRUE)
@@ -96,6 +98,8 @@ D   56    9  114 3026   11  0.05907960
 E    7   37   24   24 3515  0.02550596
 
 ```
+
+Same note as previous: this ran in a different R shell, but only took an hour or two on a faster computer with allowParallel turned on.  Again, I chose to just copy/paste in my results from the other R Shell.
 
 With cross-validation:
 ```{r eval=FALSE}
