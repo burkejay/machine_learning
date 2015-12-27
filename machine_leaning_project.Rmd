@@ -1,0 +1,154 @@
+---
+title: "Predicting the Quality of Exercise using Acceleration Telemetry Available in Wearable Devices"
+author: "Jay Burke"
+date: "December 26, 2015"
+output: html_document
+---
+# Executive Summary 
+Machine Learning algorithms were trained to predict the quality of barbell lifts done by 6 participants, just from accelerometers located in 4 different places. Cross-validation and Testing data were used to reduce the risk of overtraining.  The model is offered as a predictor of the quality of anyone doing dumbbell exercises.
+
+My prediction of test set: B A C A A E D B A A B C B A E E A B B B
+
+# Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal was to use data from accelerometers on the belt, forearm, arm, and dumbbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+# The Dataset
+The training data for this project are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+```{r}
+pmltrain <- read.csv('pml-training.csv')
+pmltest <- read.csv('pml-testing.csv')
+```
+
+# Exploratory Data Analysis
+An exploratory analysis of the data turned up training data littered with Divide by zeroes and N/As.  The problem specification for this assignment said to use the data from the accelerometers, which I deduced might mean to use the columns in the dataset that started with "accel_".  I noticed this data looked usable without cleaning and imputations, and I decided to start with those columns and see if a model could be created that had good diagnostics.
+
+```{r}
+par(mfrow=c(3,4))
+hist(pmltrain$accel_belt_x, main="belt_x")
+hist(pmltrain$accel_belt_y, main="belt_y")
+hist(pmltrain$accel_belt_z, main="belt_z")
+hist(pmltrain$accel_arm_x, main="arm_x")
+hist(pmltrain$accel_arm_y, main="arm_y")
+hist(pmltrain$accel_arm_z, main="arm_z")
+hist(pmltrain$accel_dumbbell_x, main="dumbell_x")
+hist(pmltrain$accel_dumbbell_y, main="dumbell_y")
+hist(pmltrain$accel_dumbbell_z, main="dumbell_z")
+hist(pmltrain$accel_forearm_x, main="forearm_x")
+hist(pmltrain$accel_forearm_y, main="forearm_y")
+hist(pmltrain$accel_forearm_z, main="forearm_z")
+```
+
+The data is numeric, peaky, multi-modal and definitely not normal.
+
+# Machine Learning step - Training
+I did not divide up the training set into a training and testing set, similar to what we saw in class in example after example.  I decided that we were already being handed a dataset divided into training and testing.
+
+I decided to attempt a random forest with and without crossvalidation.  I tried without crossvalidation to see what the runtime would be, and then I tried with crossvalidation because I know with Random Forests I needed that technique to lower the odds of overfitting the training data.
+
+Without cross-validation:
+```{r eval=FALSE}
+accel_data <- grep("^accel_",colnames(t), value=TRUE)
+new_t <- data.frame(t[,accel_data],t$classe)
+install.packages("caret")
+library(caret)
+library(randomForest)
+library(e1071)
+modFit <- train(t.classe ~ ., data=new_t,method="rf",prox=TRUE)
+modFit
+Random Forest 
+
+19622 samples
+   12 predictor
+    5 classes: 'A', 'B', 'C', 'D', 'E' 
+
+No pre-processing
+Resampling: Bootstrapped (25 reps) 
+Summary of sample sizes: 19622, 19622, 19622, 19622, 19622, 19622, ... 
+Resampling results across tuning parameters:
+
+  mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+   2    0.9450893  0.9305241  0.002014437  0.002536487
+   7    0.9359135  0.9189136  0.003017220  0.003795392
+  12    0.9186497  0.8970666  0.004445377  0.005580778
+Accuracy was used to select the optimal model using  the largest value.
+The final value used for the model was mtry = 2. 
+
+ print(modFit$finalModel)
+
+Call:
+ randomForest(x = x, y = y, mtry = param$mtry, proximity = TRUE) 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 2
+
+        OOB estimate of  error rate: 4.34%
+Confusion matrix:
+     A    B    C    D    E class.error
+A 5413   27   62   73    5  0.02992832
+B  122 3542   90   24   19  0.06715828
+C   45   73 3275   28    1  0.04295733
+D   56    9  114 3026   11  0.05907960
+E    7   37   24   24 3515  0.02550596
+
+```
+
+With cross-validation:
+```{r eval=FALSE}
+library(caret)
+Loading required package: lattice
+Loading required package: ggplot2
+> modFit <- train(t.classe ~ ., data=new_t,method="rf",trControl=trainControl(method="cv",number=5), prox=TRUE, allowParallel=TRUE)
+Loading required package: randomForest
+randomForest 4.6-10
+Type rfNews() to see new features/changes/bug fixes.
+
+print(modFit$finalModel)
+
+Call:
+ randomForest(x = x, y = y, mtry = param$mtry, proximity = TRUE,      allowParallel = TRUE) 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 2
+
+        OOB estimate of  error rate: 4.32%
+Confusion matrix:
+     A    B    C    D    E class.error
+A 5413   26   60   75    6  0.02992832
+B  118 3547   92   19   21  0.06584145
+C   47   74 3276   22    3  0.04266511
+D   63    7  116 3021    9  0.06063433
+E    5   34   26   25 3517  0.02495148
+
+```
+
+# Machine Learning step - Testing
+Both techniques returned good diagnostics just from the accel_ columns, and so no further attempt was made to clean, impute and use the other columns.
+
+Without crossvalidation:
+```{r eval=FALSE}
+pred <- predict(modFit,testing)
+pred
+ [1] B A C A A E D B A A B C B A E E A B B B
+Levels: A B C D E
+```
+with cross-validation:
+```{r eval = FALSE}
+> test <- read.csv("pml-testing.csv")
+> pred <- predict(modFit,test)
+> pred
+ [1] B A C A A E D B A A B C B A E E A B B B
+Levels: A B C D E
+
+```
+## Results
+Both techniques returned the same prediction on the 20 test cases.
+
+B A C A A E D B A A B C B A E E A B B B
+
+## Out-of-Bag error
+Out-of-sample error is estimated from the Out-of-Bag error, at around 4%.
